@@ -17,7 +17,7 @@ def test_class_instances_have_a_name():
 def test_init_is_called_upon_new():
     initializer = Mock()
 
-    TestClass = make_class('TestClass', {
+    TestClass = make_class('TestClass', cls_dict={
         '__init__': initializer
     })
 
@@ -29,7 +29,7 @@ def test_init_is_called_upon_new():
 def test_init_is_passed_arguments():
     initializer = Mock()
 
-    TestClass = make_class('TestClass', {
+    TestClass = make_class('TestClass', cls_dict={
         '__init__': initializer
     })
 
@@ -39,7 +39,7 @@ def test_init_is_passed_arguments():
 
 
 def test_instances_can_set_and_get_attributes():
-    TestClass = make_class('TestClass', {
+    TestClass = make_class('TestClass', cls_dict={
         '__init__': lambda self: set_(self, 'val', 1)
     })
 
@@ -49,7 +49,7 @@ def test_instances_can_set_and_get_attributes():
 
 
 def test_attributes_can_exist_on_the_class():
-    TestClass = make_class('TestClass', {
+    TestClass = make_class('TestClass', cls_dict={
         'x': 1
     })
 
@@ -59,7 +59,7 @@ def test_attributes_can_exist_on_the_class():
 
 
 def test_setting_an_attribute_shadows_the_class_attribute():
-    TestClass = make_class('TestClass', {
+    TestClass = make_class('TestClass', cls_dict={
         'x': 1
     })
 
@@ -80,7 +80,7 @@ def test_missing_attributes_raise_attribute_error():
 
 def test_methods_receive_the_instance_as_the_first_param():
     method = Mock()
-    TestClass = make_class('TestClass', {
+    TestClass = make_class('TestClass', cls_dict={
         'method': method
     })
 
@@ -115,7 +115,7 @@ def test_can_delete_instance_attributes():
 
 @raises(AttributeError)
 def test_cannot_delete_class_attributes():
-    TestClass = make_class('TestClass', {
+    TestClass = make_class('TestClass', cls_dict={
         'x': 1
     })
 
@@ -127,7 +127,7 @@ def test_cannot_delete_class_attributes():
 def test_static_methods_do_not_get_instance_as_first_param():
     method = Mock()
 
-    TestClass = make_class('TestClass', {
+    TestClass = make_class('TestClass', cls_dict={
         'method': staticmethod(method)
     })
 
@@ -141,7 +141,7 @@ def test_static_methods_do_not_get_instance_as_first_param():
 def test_class_methods_get_class_as_first_param():
     method = Mock()
 
-    TestClass = make_class('TestClass', {
+    TestClass = make_class('TestClass', cls_dict={
         'method': classmethod(method)
     })
 
@@ -150,3 +150,14 @@ def test_class_methods_get_class_as_first_param():
     get(instance, 'method')(1)
 
     method.assert_called_once_with(TestClass, 1)
+
+
+def test_attribute_lookups_will_use_inheritance():
+    BaseClass = make_class('BaseClass', cls_dict={
+        'x': 1
+    })
+    TestClass = make_class('TestClass', bases=(BaseClass,))
+
+    instance = new(TestClass)
+
+    eq_(get(instance, 'x'), 1)

@@ -1,15 +1,19 @@
-from functools import partial
 from collections import Callable
+from functools import partial
+from .mro import merge_mro
 
-
-def make_class(name, cls_dict=None):
+def make_class(name, bases=tuple(), cls_dict=None):
     """
     Construct a class dictionary
     """
     cls = {
         '__name__': name,
+        '__bases__': bases,
     }
     cls.update(cls_dict or {})
+
+    base_mros = [[cls]] + [b['mro'] for b in bases]
+    cls['mro'] = tuple(merge_mro(base_mros))
     return cls
 
 
@@ -35,20 +39,20 @@ def get(instance, attr_name):
     if attr_name in instance:
         return instance[attr_name]
 
-    cls = instance['__class__']
-    if attr_name in cls:
-        attr = cls[attr_name]
+    for cls in instance['__class__']['mro']:
+        if attr_name in cls:
+            attr = cls[attr_name]
 
-        if isinstance(attr, Callable):
-            attr = partial(attr, instance)
+            if isinstance(attr, Callable):
+                attr = partial(attr, instance)
 
-        elif isinstance(attr, staticmethod):
-            attr = attr.__func__
+            elif isinstance(attr, staticmethod):
+                attr = attr.__func__
 
-        elif isinstance(attr, classmethod):
-            attr = partial(attr.__func__, cls)
+            elif isinstance(attr, classmethod):
+                attr = partial(attr.__func__, cls)
 
-        return attr
+            return attr
 
     raise AttributeError("'%s' instanceect has no attribute '%s'" %
                          (cls['__name__'], attr_name))

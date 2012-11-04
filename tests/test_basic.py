@@ -122,3 +122,31 @@ def test_cannot_delete_class_attributes():
     instance = new(TestClass)
 
     del_(instance, 'x')
+
+
+def test_static_methods_do_not_get_instance_as_first_param():
+    method = Mock()
+
+    TestClass = make_class('TestClass', {
+        'method': staticmethod(method)
+    })
+
+    instance = new(TestClass)
+
+    get(instance, 'method')(1)
+
+    method.assert_called_once_with(1)
+
+
+def test_class_methods_get_class_as_first_param():
+    method = Mock()
+
+    TestClass = make_class('TestClass', {
+        'method': classmethod(method)
+    })
+
+    instance = new(TestClass)
+
+    get(instance, 'method')(1)
+
+    method.assert_called_once_with(TestClass, 1)

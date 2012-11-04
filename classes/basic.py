@@ -38,8 +38,16 @@ def get(instance, attr_name):
     cls = instance['__class__']
     if attr_name in cls:
         attr = cls[attr_name]
+
         if isinstance(attr, Callable):
             attr = partial(attr, instance)
+
+        elif isinstance(attr, staticmethod):
+            attr = attr.__func__
+
+        elif isinstance(attr, classmethod):
+            attr = partial(attr.__func__, cls)
+
         return attr
 
     raise AttributeError("'%s' instanceect has no attribute '%s'" %
